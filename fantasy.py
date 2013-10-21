@@ -5,18 +5,20 @@ import mechanize
 import cookielib
 import re
 url = 'http://www.footballdb.com/teams/'
+   
 
+def get_browser():
+    br = mechanize.Browser()
+    cj = cookielib.LWPCookieJar()
+    br.set_cookiejar(cj)
+    br.addheaders = [('User-Agent', 'Mozilla/5.0(X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
+    br.set_handle_equiv(True)
+    br.set_handle_robots(False)
+    br.set_handle_gzip(True)
+    br.set_debug_http(True)
+    br.set_debug_redirects(True)
+    return br
 
-br = mechanize.Browser()
-cj = cookielib.LWPCookieJar()
-br.set_cookiejar(cj)
-br.addheaders = [('User-Agent', 'Mozilla/5.0(X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
-br.set_handle_equiv(True)
-br.set_handle_robots(False)
-br.set_handle_gzip(True)
-br.set_debug_http(True)
-br.set_debug_redirects(True)
-    
 
 def get_teams(url, br):
     br.open(url)
@@ -52,7 +54,7 @@ def get_players(teams, br):
 
 # finds all the statistics table locations on the parameterized player's page
 def find_locations(url):
-    #response = urllib2.urlopen(player['url']).read()
+    # response = urllib2.urlopen(player['url']).read()
     response = urllib2.urlopen(url).read()
     to_find = '<div class="mdtext">'
     locations = [ response.find(to_find) ]
@@ -89,8 +91,14 @@ def build_stats(locs, response):
             parse_scoring(stats_object, info)
         elif 'Defensive Statistics' in info:
             parse_defensive(stats_object, info)
-        elif 'Return Statistics' in info:
+        elif 'Kickoff Returns' in info:
             parse_return(stats_object, info)
+        elif 'Kicking Statistics' in info:
+            pass
+        elif 'Kickoff Statistics' in info:
+            pass
+        elif 'Punting Statistics' in info:
+            pass
 
     return stats_object
 
