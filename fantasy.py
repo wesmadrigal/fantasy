@@ -62,6 +62,13 @@ def find_locations(url):
         locations.append( response.find(to_find, locations[len(locations)-1]+1) )
     #stats_object = build_stats(locations, response)
     #return stats_object
+    # find the college dividing line and don't take into the fucking college statistics
+    college = response.find('College statistics')
+    try:
+        while locations[len(locations)-1] > college:
+            locations.pop()
+    except IndexError:
+        pass
     return locations
 
 
@@ -81,10 +88,10 @@ def build_stats(locs, response):
         info = re.findall(seq, current_string)
         # clean up the messy info with our function
         info = cleanup_info(info)
-        
-        # if our current table is rushing/receving
-        if 'Rushing/Receiving Statistics' in info:
-            parse_rushing_receiving(stats_object, info)
+         
+            # if our current table is rushing/receving
+        if 'Receiving/Rushing Statistics' in info or 'Rushing/Receiving Statistics' in info:
+            parse_receiving(stats_object, info)
         elif 'Passing Statistics' in info:
             parse_passing(stats_object, info)
         elif 'Scoring Statistics' in info:
@@ -94,56 +101,40 @@ def build_stats(locs, response):
         elif 'Kickoff Returns' in info:
             parse_return(stats_object, info)
         elif 'Kicking Statistics' in info:
-            pass
+            parse_kicking(stats_object, info) 
         elif 'Kickoff Statistics' in info:
-            pass
+            parse_kickoff(stats_object, info)
         elif 'Punting Statistics' in info:
-            pass
+            parse_punting(stats_object, info)
 
     return stats_object
 
 
-def parse_rushing_receiving(stats_object, info):
-    # Rushing/Receiving Statistics metrics 
-    # category and sub category information is here
-    title_stuff = info[0:20]
-    career_totals_location = info.index('Career Totals')
-    main_data = info[20:career_totals_location]
-    career_totals = info[career_totals_location:]
-    category = title_stuff[0]
-    # put the category in our stats_object
-    sub_category1 = title_stuff[2]
-    sub_category2 = title_stuff[3]
-    stats_object[category] = { sub_category1 : [], sub_category2: [] }
+def parse_receiving(stats_object, info):
+    # Receiving/Rushing statistics
+    titles = info[0:20]
+    main_data = info[20: info.index('Career Totals')]
+    career_totals = info[ info.index('Career Totals') : ]
+    # update our stats_object
+    category = titles[0]
+    receiving = titles[2]
+    rushing = titles[3]
+    stats_object[category] = { receiving : [], rushing : [] }
     for i in range(0, len(main_data), 16):
-        this = main_data[i:i+16]
-        year = this[0]
-        team = this[1]
-        g = this[2]
-        gs = this[3]
-        att1 = this[4]
-        yds1 = this[5]
-        avg1 = this[6]
-        lg1 = this[7]
-        td1 = this[8]
-        fd1 = this[9]
-        att2 = this[10]
-        yds2 = this[11]
-        avg2 = this[12]
-        lg2 = this[13]
-        td2 = this[14]
-        fd2 = this[15]
-        cat1 = [year, team, g, gs, att1, yds1, avg1, lg1, td1, fd1]
-        cat2 = [year, team, g, gs, att2, yds2, avg2, lg2, td2, fd2]
-        stats_object[category][sub_category1].append(cat1)
-        stats_object[category][sub_category2].append(cat2)
-    # add our career totals
-    # g gs att yds avg lg td fd
-    totals_subcat1 = [ career_totals[1], career_totals[2], career_totals[3], career_totals[4], career_totals[5], career_totals[6], career_totals[7], career_totals[8] ]
-    totals_subcat2 = [ career_totals[1], career_totals[2], career_totals[9], career_totals[10], career_totals[11], career_totals[12], career_totals[13], career_totals[14] ]
-    # append our totals to the end of our 2d array
-    stats_object[category][sub_category1].append(totals_subcat1)
-    stats_object[category][sub_category2].append(totals_subcat2)     
+        this = main_data[i : i+16]
+        year, team, g, gs = this[0:4]
+        rec_stuff = [year, team, g, gs] + this[4:10]
+        rush_stuff = [year, team, g, gs] + this[10:] 
+        # add these statistics to our stats_object
+        stats_object[category][receiving].append( rec_stuff )
+        stats_object[category][rushing].append( rush_stuff )
+    total_g, total_gs = career_totals[1], career_totals[2]
+    rec_totals = [total_g, total_gs] + career_totals[3:9]
+    rush_totals = [total_g, total_gs] + career_totals[9:]
+    # add our totals to our stats_object
+    stats_object[category][receiving].append( rec_totals )
+    stats_object[category][rushing].append( rush_totals )
+    print "Receiving/Rushing updated" 
 
 
 def parse_passing(stats_object, info):
@@ -280,6 +271,79 @@ def parse_return(stats_object, info):
     print "Return Statistics updated"
 
 
+def parse_kicking(stats_object, info):
+    # for kickers there is a table called Kicking Statistics with a schema like:
+    # year, team, g, gs, pat, fg, 0-19, 20-29, 30-39, 40-49, 50+, Lg, Pts
+    titles = info[0:16]
+    category = titles[0]
+    kicking = titles[2]
+    main_data = info[16: info.index('Career Totals') ]
+    career_totals = info[ info.index('Career Totals') : ]
+    # update stats_object
+    stats_object[category] = { kicking : [] }
+
+    for i in range(0, len(main_data), 13):
+        this = main_data[ i : i+13 ]
+        stats_object[category][kicking].append( this )
+    # add career totals
+    stats_object[category][kicking].append( career_totals[1:] )
+    print "Kicking Statistics updated"
+
+
+def parse_kickoff(stats_object, info):
+    # for kickers we also have the Kickoff Statistics table with a schema like:
+    #           kickoffs                 opponent returns    onside kicks
+    # G, GS  Num, Yds, Avg, Lg, TB, OB,  Ret, Yds, TDs,     OSK,    OSR
+    titles = info[0:20]
+    category = titles[0]
+    kickoffs = titles[2]
+    opp_returns = titles[3]
+    onside_kicks = titles[4]
+    main_data = info[20: info.index(' Totals') ]
+    totals = info[ info.index(' Totals') : ]
+    # update our stats object accordingly
+    stats_object[category] = { kickoffs : [], opp_returns : [], onside_kicks : [] }
+    for i in range(0, len(main_data), 15):
+        this = main_data[ i : i+15 ]
+        year, team, g, gs = this[0:4]
+        kickoff_stuff = [year, team, g, gs] + this[4:10]
+        opp_return_stuff = [year, team, g, gs] + this[10:13]
+        onside_stuff = [year, team, g, gs] + this[13:]
+        # update each sub-category accordingly
+        stats_object[category][kickoffs].append( kickoff_stuff )
+        stats_object[category][opp_returns].append( opp_return_stuff )
+        stats_object[category][onside_kicks].append( onside_stuff )
+    # now we need to iterate through and add our totals to each sub-category
+    total_g, total_gs = totals[1], totals[2]
+    kickoff_totals = [total_g, total_gs] + totals[3:9]
+    opp_return_totals = [total_g, total_gs] + totals[9:12]
+    onside_totals = [total_g, total_gs] + totals[12:]
+    # add totals to our object
+    stats_object[category][kickoffs].append( kickoff_totals )
+    stats_object[category][opp_returns].append( opp_return_totals )
+    stats_object[category][onside_kicks].append( onside_kicks )
+    print "Kickoff Statistics updated"
+
+
+def parse_punting(stats_object, info):
+    # for kickers we also have Punting Statistics table with a schema like
+    # G, GS, Punts, Yds, Avg, Lg, TB, In20, Blk, Ret, Yds, Net
+    titles = info[0:17]
+    category = titles[0]
+    sub_category = titles[2] 
+    main_data = info[17 : info.index(' Totals') ]
+    totals = info[ info.index(' Totals') : ]
+    # update our stats object
+    stats_object[category] = { sub_category : [] }
+    for i in range(0, len(main_data), 14):
+        this = main_data[i : i+14]
+        stats_object[category][sub_category].append( this )
+    # now we need to update our totals
+    totals = totals[1:]
+    stats_object[category][sub_category].append( totals )
+    print "Punting Statistics updated"
+ 
+ 
 def build_stats_test(loc, response):
     stats_object = {}
     # our compile regular expression sequence for finding the info we give as shit about
