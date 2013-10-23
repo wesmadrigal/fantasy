@@ -5,7 +5,32 @@ import mechanize
 import cookielib
 import re
 url = 'http://www.footballdb.com/teams/'
-   
+
+
+class NFLData(object):
+    def __init__(self):
+        self._url = url
+        self._br = get_browser()
+       
+    def _get_teams(self):
+        self.teams = get_teams(url, self._br)
+    
+    def _get_players(self):
+        get_players(self.teams)
+
+    # must be called subsequent to the other two methods and will take some time to run
+    def get_player_stats(self):
+        for team in self.teams.keys():
+            for player in self.teams[team]['players'].keys():
+                cur_player_url = self.teams[team]['players'][player]['url']
+                locations = find_locations(cur_player_url)
+                response = urllib2.urlopen(cur_player_url).read()
+                stats = build_stats(locations, response)
+                # set the players statistics
+                self.teams[team]['players'][player]['stats'] = stats
+        
+
+
 
 def get_browser():
     br = mechanize.Browser()
