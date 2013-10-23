@@ -16,7 +16,7 @@ class NFLData(object):
         self.teams = get_teams(url, self._br)
     
     def _get_players(self):
-        get_players(self.teams)
+        get_players(self.teams, self._br)
 
     # must be called subsequent to the other two methods and will take some time to run
     def get_player_stats(self):
