@@ -6,13 +6,6 @@ import cookielib
 import re
 url = 'http://www.footballdb.com/teams/'
 
-class TestClass(object):
-    def __init__(self):
-        self._id = int()
-        
-    def __str__(self):
-        return str(self._id)
-
 class NFLData(object):
     def __init__(self):
         self._url = url
@@ -34,9 +27,28 @@ class NFLData(object):
                 stats = build_stats(locations, response)
                 # set the players statistics
                 self.teams[team]['players'][player]['stats'] = stats
-        
 
-
+    def get_team(self):
+        team_mappings = zip(self.teams.keys(), range(len(self.teams.keys())))
+        for i in team_mappings:
+            print i[0], i[1]
+        t = raw_input("Enter the team number from above: ")
+        #return self.teams[ team_mappings[ int(t) ][0] ]
+        return Team( self.teams[ team_mappings[ int(t) ][0] ] )
+    
+class Team(object):
+    def __init__(self, data):
+        self.data = data
+    
+    def get_data(self):
+        return self.data
+ 
+    def get_player(self):
+        player_mappings = zip(range(len(self.data['players'].keys())), self.data['players'].keys())
+        for _set in player_mappings:
+            print _set[0], _set[1]
+        player = raw_input("Pick player from above: ")
+        return self.data['players'][ player_mappings[ int(player) ][1] ]
 
 def get_browser():
     br = mechanize.Browser()
