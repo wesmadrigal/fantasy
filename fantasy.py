@@ -6,6 +6,12 @@ import cookielib
 import re
 url = 'http://www.footballdb.com/teams/'
 
+class TestClass(object):
+    def __init__(self):
+        self._id = int()
+        
+    def __str__(self):
+        return str(self._id)
 
 class NFLData(object):
     def __init__(self):
