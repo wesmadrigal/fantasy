@@ -23,7 +23,7 @@ fantasy football data mining
 
 <h1>Usage</h1>
 
-<p><code>from fantasy import NFLData<br>
+<p><code><b>from fantasy import NFLData<br>
 # instantiate an NFLData object<br>
 nfl = NFLData()<br>
 nfl._get_teams()<br>
@@ -31,5 +31,5 @@ nfl._get_players()<br>
 nfl.get_player_stats()<br>
 # we now have a fully accessible nfl object<br>
 # the below will pop up a raw input with options for you to pick your team
-stl_rams = nfl.get_team()</code>
+stl_rams = nfl.get_team()</b></code>
 </p>
