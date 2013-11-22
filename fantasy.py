@@ -49,12 +49,19 @@ class Team(object):
             print _set[0], _set[1]
         player = raw_input("Pick player from above: ")
         return self.data['players'][ player_mappings[ int(player) ][1] ]
+        
 
 
 class Player(Team):
     def __init__(self, team, data):
         self.team = team
         self.data = data
+
+    def get_team(self):
+        return self.team
+  
+    def get_data(self):
+        return self.data
 
     def get_child(self):
         return self.data
