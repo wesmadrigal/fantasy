@@ -23,7 +23,7 @@ fantasy football data mining
 
 <h1>Usage</h1>
 
-<p><code>from fantasy import NFLData</code><br>
+<p><code>from fantasy import NFLData<br>
 # instantiate an NFLData object<br>
 nfl = NFLData()<br>
 nfl._get_teams()<br>
